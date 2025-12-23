@@ -122,22 +122,7 @@ app.delete("/user", async (req,res)=>{
 
 
 // Update user by ID
-app.put("/user", async (req,res)=>{
-    const userId = req.body.userId;
-    const updateData = req.body;
-    try{
-        const user = await User.findByIdAndUpdate(userId, updateData, {new:true});
-        if(!user){
-            return res.status(404).json({message:"User not found"});
-        }
-        res.status(200).json({
-            message:"User updated successfully",
-            user
-        });
-    }catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-});
+
 
 // Database Connection
 (async () => {
