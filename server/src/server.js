@@ -1,17 +1,22 @@
 const express = require("express");
-const mongoose = require("mongoose");
-require('dotenv').config();
+require("dotenv").config();
+const dbConnect = require("./config/database");
 
 const PORT = process.env.PORT || 3000;
 const app = express();
 
-app.get("/",(req,res)=>{
-    res.json({
-        message:"Success!"
-    })
-})
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-app.listen(PORT, ()=>{
-    console.log(`Server runnning on port ${PORT}`);    
-});
+(async () => {
+    try {
+        await dbConnect(); 
 
+        app.listen(PORT, () => {
+            console.log(`Server running on port ${PORT}`);
+        });
+    } catch (err) {
+        console.error("Server startup failed");
+        process.exit(1);
+    }
+})();
