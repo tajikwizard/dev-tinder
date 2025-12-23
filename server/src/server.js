@@ -42,6 +42,7 @@ app.post("/signup", async (req, res) => {
     }
 });
 
+//Login
 app.post("/login", async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -69,6 +70,8 @@ app.post("/login", async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 });
+
+//Get user by email
 app.get("/user", async (req,res)=>{
     const {email} = req.body;
     try {
@@ -85,6 +88,8 @@ app.get("/user", async (req,res)=>{
     }
 })
 
+
+//Get all users
 app.get("/feed", async (req, res) => {
     try {
         const users = await User.find({});
@@ -93,6 +98,43 @@ app.get("/feed", async (req, res) => {
             users
         });
     } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+
+//Delete user by ID
+app.delete("/user", async (req,res)=>{
+    const userId = req.body.userId;
+    try{
+        const user = await User.findByIdAndDelete(userId);
+        if(!user){
+            return res.status(404).json({message:"User not found"});
+        }
+        res.status(200).json({
+            message:"User deleted successfully",
+            user
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+
+// Update user by ID
+app.put("/user", async (req,res)=>{
+    const userId = req.body.userId;
+    const updateData = req.body;
+    try{
+        const user = await User.findByIdAndUpdate(userId, updateData, {new:true});
+        if(!user){
+            return res.status(404).json({message:"User not found"});
+        }
+        res.status(200).json({
+            message:"User updated successfully",
+            user
+        });
+    }catch (error) {
         res.status(500).json({ message: error.message });
     }
 });
