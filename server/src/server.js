@@ -11,34 +11,33 @@ app.use(express.urlencoded({ extended: true }));
 
 
 //Signup
+
+
 app.post("/signup", async (req, res) => {
     try {
-        if (!req.body) {
-            return res.status(400).json({
-                message: "Request body is missing"
-            });
-        }
         const { firstName, lastName, email, password } = req.body;
+
         if (!firstName || !lastName || !email || !password) {
-            return res.status(400).json({
-                message: "All fields are required"
-            });
+            return res.status(400).json({ message: "All fields are required" });
+        }
+
+        const emailTrimmed = email.trim().toLowerCase();
+  
+        const existingUser = await User.findOne({ email: emailTrimmed });
+        if (existingUser) {
+            return res.status(400).json({ message: "Email already in use" });
         }
         const user = await User.create({
             firstName,
             lastName,
-            email,
+            email: emailTrimmed,
             password
         });
 
-        res.status(201).json({
-            message: "User created",
-            userId: user._id
-        });
+        res.status(201).json({ message: "User created", userId: user._id });
+
     } catch (error) {
-        res.status(400).json({
-            message: error.message
-        });
+        res.status(500).json({ message: error.message });
     }
 });
 
