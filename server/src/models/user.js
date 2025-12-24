@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const validator = require("validator");
+const { signToken } = require("../utils/token");
 
 const userSchema = new mongoose.Schema({
     firstName:{
@@ -61,5 +62,12 @@ const userSchema = new mongoose.Schema({
     { timestamps: true }
 )
 
+/**
+ * INSTANCE METHOD
+ * this === current user document
+ */
+userSchema.methods.getJWT = function() {
+ return signToken(this._id);
+}
 const User = mongoose.model("User", userSchema);
 module.exports = User;

@@ -56,11 +56,11 @@ app.post("/login", async (req, res) => {
           return res.status(401).json({ message: "Invalid credentials" });
         }
 
-        const token = signToken(userFound._id);
+        const token = userFound.getJWT()
         res.cookie("token", token, { httpOnly: true });
         res.json({
             message: "Login successful",
-            userId: userFound._id
+            userId: userFound
         });
 
     } catch (error) {
