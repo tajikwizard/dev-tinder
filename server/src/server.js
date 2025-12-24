@@ -4,12 +4,15 @@ const dbConnect = require("./config/database");
 const User = require("./models/user");
 const { validateSignupData } = require("./utils/validation");
 const { hashPassword, verifyPassword } = require("./utils/password");
+const { signToken,verifyToken } = require("./utils/token");
+const cookieParser = require('cookie-parser')
 
 const PORT = process.env.PORT || 3000;
 const app = express();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 
 //Signup
@@ -29,7 +32,7 @@ app.post("/signup", async (req, res) => {
         await user.save();
         res.status(201).json({ message: "User created", userId: user._id });
 
-    } catch (error) {
+    } catch (error) { 
         res.status(500).json({ message: error.message });
     }
 });
@@ -41,18 +44,19 @@ app.post("/login", async (req, res) => {
         if (!email || !password) {
             return res.status(400).json({ message: "Email and password required" });
         }
-
         const userFound = await User.findOne({ email });
-        const isPasswordValid = await verifyPassword(password, userFound.password);
-        
+
         if (!userFound) {
-            return res.status(401).json({ message: "Invalid credentials" });
+          return res.status(401).json({ message: "Invalid credentials" });
         }
+        const isPasswordValid = await verifyPassword(password, userFound.password);
 
         if (!isPasswordValid) {
-            return res.status(401).json({ message: "Invalid credentials" });
+          return res.status(401).json({ message: "Invalid credentials" });
         }
 
+        const token = await signToken(userFound);
+        res.cookie("token", token, { httpOnly: true });
         res.json({
             message: "Login successful",
             userId: userFound._id
@@ -61,6 +65,12 @@ app.post("/login", async (req, res) => {
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
+});
+
+//Logout
+app.post("/logout", (req, res) => {
+    res.clearCookie("token");
+    res.json({ message: "Logout successful" });
 });
 
 //Get user by email
@@ -80,6 +90,31 @@ app.get("/user", async (req,res)=>{
     }
 })
 
+//Get profile
+app.get("/profile", async (req, res) => {
+  const token = req.cookies.token;
+
+  if (!token) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+  try {
+    let decoded;
+    decoded = await verifyToken(token);
+    const user = await User.findById(decoded.userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }else{
+      res.status(200).json({
+        message: "Profile fetched successfully",
+        data: user
+      });
+    }
+  } catch (err) {
+    return res.status(401).json({ message: "Invalid token" });
+  }
+
+
+});
 
 //Get all users
 app.get("/feed", async (req, res) => {

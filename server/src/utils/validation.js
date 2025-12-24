@@ -1,8 +1,8 @@
 const validator = require("validator");
 const validateSignupData = (req) => {
-    const { firstName, lastName, email, password } = req.body;
+    const { firstName, email, password } = req.body;
 
-    if(!firstName || !lastName || !email || !password) {
+    if(!firstName || !email || !password) {
         throw new Error("All fields are required");
     }else if(firstName.length < 5 || !/^[A-Za-z]+$/.test(firstName)){
         throw new Error("First name must be at least 5 characters long and contain only letters");
