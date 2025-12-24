@@ -2,6 +2,8 @@ const express = require("express");
 require("dotenv").config();
 const dbConnect = require("./config/database");
 const User = require("./models/user");
+const { validateSignupData } = require("./utils/validation");
+const { hashPassword, verifyPassword } = require("./utils/password");
 
 const PORT = process.env.PORT || 3000;
 const app = express();
@@ -11,29 +13,20 @@ app.use(express.urlencoded({ extended: true }));
 
 
 //Signup
-
-
 app.post("/signup", async (req, res) => {
+    
     try {
-        const { firstName, lastName, email, password } = req.body;
-
-        if (!firstName || !lastName || !email || !password) {
-            return res.status(400).json({ message: "All fields are required" });
-        }
-
-        const emailTrimmed = email.trim().toLowerCase();
+        validateSignupData(req);
+       const hashedPwd = await hashPassword(req.body.password);
+        req.body.password = hashedPwd;
+        const emailTrimmed = req.body.email.trim().toLowerCase();
   
         const existingUser = await User.findOne({ email: emailTrimmed });
         if (existingUser) {
             return res.status(400).json({ message: "Email already in use" });
         }
-        const user = await User.create({
-            firstName,
-            lastName,
-            email: emailTrimmed,
-            password
-        });
-
+        const user = new User(req.body);
+        await user.save();
         res.status(201).json({ message: "User created", userId: user._id });
 
     } catch (error) {
@@ -45,18 +38,18 @@ app.post("/signup", async (req, res) => {
 app.post("/login", async (req, res) => {
     try {
         const { email, password } = req.body;
-
         if (!email || !password) {
             return res.status(400).json({ message: "Email and password required" });
         }
 
         const userFound = await User.findOne({ email });
-
+        const isPasswordValid = await verifyPassword(password, userFound.password);
+        
         if (!userFound) {
             return res.status(401).json({ message: "Invalid credentials" });
         }
 
-        if (userFound.password !== password) {
+        if (!isPasswordValid) {
             return res.status(401).json({ message: "Invalid credentials" });
         }
 
@@ -121,8 +114,22 @@ app.delete("/user", async (req,res)=>{
 
 
 // Update user by ID
-
-
+app.put("/user", async (req, res) => {
+    const userId = req.body.userId;
+    const updateData = req.body;
+    try {
+        const user = await User.findByIdAndUpdate(userId, updateData, { new: true, runValidators: true });
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+        res.status(200).json({
+            message: "User updated successfully",
+            user
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }   
+});
 // Database Connection
 (async () => {
     try {
