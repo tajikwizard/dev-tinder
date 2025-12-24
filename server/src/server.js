@@ -5,7 +5,8 @@ const User = require("./models/user");
 const { validateSignupData } = require("./utils/validation");
 const { hashPassword, verifyPassword } = require("./utils/password");
 const { signToken,verifyToken } = require("./utils/token");
-const cookieParser = require('cookie-parser')
+const cookieParser = require('cookie-parser');
+const { userAuth } = require("./middlewares/auth");
 
 const PORT = process.env.PORT || 3000;
 const app = express();
@@ -55,7 +56,7 @@ app.post("/login", async (req, res) => {
           return res.status(401).json({ message: "Invalid credentials" });
         }
 
-        const token = await signToken(userFound);
+        const token = signToken(userFound._id);
         res.cookie("token", token, { httpOnly: true });
         res.json({
             message: "Login successful",
@@ -74,7 +75,7 @@ app.post("/logout", (req, res) => {
 });
 
 //Get user by email
-app.get("/user", async (req,res)=>{
+app.get("/user", userAuth, async (req,res)=>{
     const {email} = req.body;
     try {
         const user = await User.findOne({email});
@@ -91,33 +92,26 @@ app.get("/user", async (req,res)=>{
 })
 
 //Get profile
-app.get("/profile", async (req, res) => {
-  const token = req.cookies.token;
-
-  if (!token) {
-    return res.status(401).json({ message: "Unauthorized" });
-  }
+app.get("/profile", userAuth, async (req, res) => {
   try {
-    let decoded;
-    decoded = await verifyToken(token);
-    const user = await User.findById(decoded.userId);
+    const user = await User.findById(req.userId).select("-password");
+
     if (!user) {
       return res.status(404).json({ message: "User not found" });
-    }else{
-      res.status(200).json({
-        message: "Profile fetched successfully",
-        data: user
-      });
     }
-  } catch (err) {
-    return res.status(401).json({ message: "Invalid token" });
+
+    res.status(200).json({
+      message: "Profile fetched successfully",
+      data: user
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
-
-
 });
 
+
 //Get all users
-app.get("/feed", async (req, res) => {
+app.get("/feed", userAuth, async (req, res) => {
     try {
         const users = await User.find({});
         res.status(200).json({
@@ -131,7 +125,7 @@ app.get("/feed", async (req, res) => {
 
 
 //Delete user by ID
-app.delete("/user", async (req,res)=>{
+app.delete("/user",userAuth, async (req,res)=>{
     const userId = req.body.userId;
     try{
         const user = await User.findByIdAndDelete(userId);
@@ -149,7 +143,7 @@ app.delete("/user", async (req,res)=>{
 
 
 // Update user by ID
-app.put("/user", async (req, res) => {
+app.put("/user",userAuth, async (req, res) => {
     const userId = req.body.userId;
     const updateData = req.body;
     try {
