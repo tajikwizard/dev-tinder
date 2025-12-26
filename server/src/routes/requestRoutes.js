@@ -4,7 +4,7 @@ const User = require("../models/userSchema");
 const Connection = require("../models/connectionSchema");
 const requestRoutes = express.Router();
 
-
+// ---- Send Request Route ----
 requestRoutes.post("/request/send/:status/:userId", userAuth, async (req, res) => {
   try {
     const fromUserId = req.userId;
@@ -54,5 +54,38 @@ requestRoutes.post("/request/send/:status/:userId", userAuth, async (req, res) =
     res.status(500).json({ message: "Server error. Please try again later." });
   }
 });
+
+// ---- Review Request Route ----
+requestRoutes.post("/request/review/:action/:requestId", userAuth, async (req, res) => {
+  try {
+    const userId = req.userId;
+    const { action, requestId } = req.params;
+
+    const allowedActions = ['accepted', 'rejected'];
+    if(!allowedActions.includes(action)){
+      return res.status(400).json({
+        message:"Invalid action type:" + action
+      })
+    }
+
+    const connectionRequest = await Connection.findOne({
+      _id: requestId,
+      toUserId: userId,
+      status: "interested"
+    });
+
+    if(!connectionRequest){
+      return res.status(404).json({ message: "Connection request not found." });
+    }
+    // Update the connection request status
+    connectionRequest.status = action;
+    await connectionRequest.save();
+    res.status(200).json({ message: `Connection request ${action}.`, data: connectionRequest });
+
+  } catch (error) {
+    res.status(500).json({ message: "Server error. Please try again later." });
+  }
+});
+
 
 module.exports = requestRoutes;
