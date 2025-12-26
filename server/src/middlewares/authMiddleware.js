@@ -1,4 +1,4 @@
-const User = require("../models/user");
+const User = require("../models/userSchema");
 const { verifyToken } = require("../utils/token");
 const userAuth = async (req, res, next) => {
   const token = req.cookies.token;
