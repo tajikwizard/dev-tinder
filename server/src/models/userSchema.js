@@ -49,7 +49,7 @@ const userSchema = new mongoose.Schema(
     },
     photoUrl: {
       type: String,
-      default: 'https://example.com/default.png',
+      default: 'https://i.pravatar.cc/150',
     },
     desc: {
       type: String,

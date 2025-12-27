@@ -46,7 +46,7 @@ authRoutes.post('/login', async (req, res) => {
     res.cookie('token', token, { httpOnly: true });
     res.json({
       message: 'Login successful',
-      userId: userFound,
+      user: userFound,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
