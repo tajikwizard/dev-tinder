@@ -59,6 +59,11 @@ userRouter.get('/feed', userAuth, async (req, res) => {
   try {
     const loggedInUserId = req.userId;
 
+    // Parse page and limit from query, set default values
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
     const connections = await Connection.find({
       $or: [{ fromUserId: loggedInUserId }, { toUserId: loggedInUserId }],
     });
@@ -75,7 +80,10 @@ userRouter.get('/feed', userAuth, async (req, res) => {
 
     const users = await User.find({
       _id: { $nin: [...excludedUserIds] },
-    }).select('-password -createdAt  -updatedAt');
+    })
+      .select('-password -createdAt  -updatedAt')
+      .skip(skip)
+      .limit(limit);
 
     res.status(200).json(users);
   } catch (err) {
