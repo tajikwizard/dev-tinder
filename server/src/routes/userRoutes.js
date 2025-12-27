@@ -54,4 +54,32 @@ userRouter.get('/user/connections', userAuth, async (req, res) => {
   }
 });
 
+// ------ Feed ------
+userRouter.get('/feed', userAuth, async (req, res) => {
+  try {
+    const loggedInUserId = req.userId;
+
+    const connections = await Connection.find({
+      $or: [{ fromUserId: loggedInUserId }, { toUserId: loggedInUserId }],
+    });
+
+    const excludedUserIds = new Set([loggedInUserId]);
+
+    connections.forEach((req) => {
+      if (req.fromUserId.toString() !== loggedInUserId)
+        excludedUserIds.add(req.fromUserId.toString());
+
+      if (req.toUserId.toString() !== loggedInUserId)
+        excludedUserIds.add(req.toUserId.toString());
+    });
+
+    const users = await User.find({
+      _id: { $nin: [...excludedUserIds] },
+    }).select('-password -createdAt  -updatedAt');
+
+    res.status(200).json(users);
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to load feed' });
+  }
+});
 module.exports = userRouter;
