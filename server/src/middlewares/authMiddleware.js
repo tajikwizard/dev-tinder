@@ -1,10 +1,10 @@
-const User = require("../models/userSchema");
-const { verifyToken } = require("../utils/token");
+const User = require('../models/userSchema');
+const { verifyToken } = require('../utils/token');
 const userAuth = async (req, res, next) => {
   const token = req.cookies.token;
 
   if (!token) {
-    return res.status(401).json({ message: "Unauthorized" });
+    return res.status(401).json({ message: 'Unauthorized' });
   }
   try {
     let decoded;
@@ -12,7 +12,7 @@ const userAuth = async (req, res, next) => {
     req.userId = decoded.userId;
     next();
   } catch (err) {
-    return res.status(401).json({ message: "Invalid token" });
+    return res.status(401).json({ message: 'Invalid token' });
   }
 };
 module.exports = { userAuth };

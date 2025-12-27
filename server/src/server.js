@@ -1,11 +1,11 @@
-const express = require("express");
-require("dotenv").config();
-const dbConnect = require("./config/database");
+const express = require('express');
+require('dotenv').config();
+const dbConnect = require('./config/database');
 const cookieParser = require('cookie-parser');
-const authRoutes = require("./routes/authRoutes");
-const profileRoutes = require("./routes/profileRoutes");
-const userRoutes = require("./routes/userRoutes");
-const requestRoutes = require("./routes/requestRoutes");
+const authRoutes = require('./routes/authRoutes');
+const profileRoutes = require('./routes/profileRoutes');
+const userRoutes = require('./routes/userRoutes');
+const requestRoutes = require('./routes/requestRoutes');
 
 const PORT = process.env.PORT || 3000;
 const app = express();
@@ -15,22 +15,21 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 // ----- All the Routes -----
-app.use("/", authRoutes);
-app.use("/", profileRoutes);
-app.use("/", userRoutes);
-app.use("/",requestRoutes);
-
+app.use('/', authRoutes);
+app.use('/', profileRoutes);
+app.use('/', userRoutes);
+app.use('/', requestRoutes);
 
 // Database Connection
 (async () => {
-    try {
-        await dbConnect(); 
+  try {
+    await dbConnect();
 
-        app.listen(PORT, () => {
-            console.log(`Server running on port ${PORT}`);
-        });
-    } catch (err) {
-        console.error("Server startup failed");
-        process.exit(1);
-    }
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  } catch (err) {
+    console.error('Server startup failed');
+    process.exit(1);
+  }
 })();
