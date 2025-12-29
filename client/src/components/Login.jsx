@@ -25,8 +25,9 @@ function Login() {
         { withCredentials: true },
       );
       console.log('Login successful:', response.data);
-      dispatch(addUser(response.data));
-      return navigate('/feed');
+      localStorage.setItem('token', response.data.token);
+      dispatch(addUser(response.data.user));
+      navigate('/feed');
       // Handle success (e.g., save token, redirect)
       localStorage.setItem('token', response.data.token);
     } catch (err) {

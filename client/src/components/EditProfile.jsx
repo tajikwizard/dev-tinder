@@ -14,13 +14,13 @@ function EditProfile() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [uploading, setUploading] = useState(false);
 
+  // Fetch profile on mount
   useEffect(() => {
     const fetchProfile = async () => {
       try {
         setLoading(true);
-        const res = await axios.get('http://localhost:3000/profile/view', {
+        const res = await axios.get(`${BASE_URL}/profile/view`, {
           withCredentials: true,
         });
         setProfile(res.data.data);
@@ -30,49 +30,38 @@ function EditProfile() {
         setLoading(false);
       }
     };
+
     fetchProfile();
   }, []);
 
+  // Handle text/number/select changes
   const handleChange = (e) => {
     const { name, value } = e.target;
     setProfile({ ...profile, [name]: value });
   };
 
-  const handleFileChange = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    setUploading(true);
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('upload_preset', 'YOUR_UPLOAD_PRESET'); // replace with your preset
-
-      const res = await axios.post(
-        `https://api.cloudinary.com/v1_1/YOUR_CLOUD_NAME/image/upload`, // replace with your cloud name
-        formData,
-      );
-
-      setProfile({ ...profile, photoUrl: res.data.secure_url });
-    } catch (err) {
-      console.error(err);
-      setError('Image upload failed');
-    } finally {
-      setUploading(false);
-    }
+  // Handle skills input (comma-separated)
+  const handleSkillsChange = (e) => {
+    setProfile({
+      ...profile,
+      skills: e.target.value.split(',').map((s) => s.trim()),
+    });
   };
 
+  // Submit updated profile
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setSuccess('');
+
     try {
       const res = await axios.patch(
         'http://localhost:3000/profile/edit',
         profile,
         { withCredentials: true },
       );
-      setSuccess('Profile updated successfully!');
       setProfile(res.data.data);
+      setSuccess('Profile updated successfully!');
     } catch (err) {
       console.error(err);
       setError(err.response?.data?.message || 'Failed to update profile');
@@ -92,22 +81,16 @@ function EditProfile() {
         {success && <p className="text-green-500 text-center">{success}</p>}
         {error && <p className="text-red-500 text-center">{error}</p>}
 
-        {/* Profile Image Preview */}
+        {/* Static Profile Image */}
         <div className="flex flex-col items-center">
           <img
             src={profile.photoUrl || 'https://i.pravatar.cc/150'}
             alt="Profile"
             className="w-24 h-24 rounded-full mb-2"
           />
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleFileChange}
-            disabled={uploading}
-          />
-          {uploading && <p className="text-sm text-gray-500">Uploading...</p>}
         </div>
 
+        {/* Form Fields */}
         <input
           type="text"
           name="firstName"
@@ -154,12 +137,7 @@ function EditProfile() {
           type="text"
           name="skills"
           value={profile.skills.join(', ')}
-          onChange={(e) =>
-            setProfile({
-              ...profile,
-              skills: e.target.value.split(',').map((s) => s.trim()),
-            })
-          }
+          onChange={handleSkillsChange}
           placeholder="Skills (comma separated)"
           className="border px-3 py-2 rounded-md"
         />
